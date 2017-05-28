@@ -62,7 +62,7 @@ def check_for_combination_opportunities(orders):
 
 			print ("{} distance is {} which costs KES {}".format(order1['orderName'], round(order1_dist, 2), round(order1_dist*cost, 2)))
 			print ("{} distance is {} which costs KES {}".format(order2['orderName'], round(order2_dist, 2), round(order2_dist*cost, 2)))
-			print("If {} and {} is combined the cost will be {}".format(order1['orderName'], order2['orderName'], final_cost))
+			print("If {} and {} are combined the cost will be {}".format(order1['orderName'], order2['orderName'], final_cost))
 			print("Total savings is {}".format(round(total_savings, 2)))
 			print("")
 
