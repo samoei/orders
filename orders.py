@@ -6,6 +6,9 @@ from geopy.distance import vincenty
 from geopy.exc import GeocoderTimedOut
 
 cost = 30
+hour = 60.0  # two Orders placed in a variance of less than 60 mins, used to determine if same rider can pick these orders
+max_pickup_distance_apart = 50.0  # maximum distance between two orders pick up points, used to determine if same rider can pick these orders
+max_dropoff_distance_apart = 100.00  # maximum distance between two orders drop off points, used to determine if same rider can deliver these orders
 
 orders = [
 	{
@@ -42,7 +45,8 @@ orders = [
 ]
 
 
-def orders_place_recently(orders):
+def check_for_combination_opportunities(orders):
+	""" Gets (incase of any) combination opportunities from the orders list passed """
 	for order1, order2 in itertools.combinations(orders, 2):
 		if can_be_picked_same_time(order1, order2) and can_be_delivered_same_time(order1, order2):
 			print("========== COMBINATION OPPORTUNITY FOUND ==============")
@@ -64,23 +68,38 @@ def orders_place_recently(orders):
 
 
 def can_be_picked_same_time(order1, order2):
+	"""
+	Checks whether two orders can be collected by the same rider from their pick up points
+	Uses time to compare the order placements of the two orders
+	Uses distance between the two pickup points for comparison
+
+	"""
 	time = difference_in_placement_time(order1, order2)
 	dist = difference_in_pickup_distance(order1, order2)
-	if time < 60.0 and dist < 50.0:
+	if time < hour and dist < max_pickup_distance_apart:
 		return True
 	else:
 		return False
 
 
 def can_be_delivered_same_time(order1, order2):
+	"""
+	Checks whether two orders can be delivered by the same rider to their drop off points
+	Uses distance between the two drop off points for comparison
+
+	"""
 	dist = difference_in_dropoff_distance(order1, order2)
-	if dist < 100.0:
+	if dist < max_dropoff_distance_apart:
 		return True
 	else:
 		return False
 
 
 def difference_in_placement_time(order1, order2):
+	"""
+	Returns difference in minutes between when the two orders were placed
+
+	"""
 	if (order1['placementTime'] - order2['placementTime']).days < 0:
 		return (order2['placementTime'] - order1['placementTime']).total_seconds() / 60
 	else:
@@ -88,6 +107,10 @@ def difference_in_placement_time(order1, order2):
 
 
 def geocode(city, recursion=0):
+	"""
+	Given a address as a string it returns a geo location for that address
+
+	"""
 	geolocator = Nominatim()
 	try:
 		return geolocator.geocode(city, timeout=10)
@@ -101,10 +124,18 @@ def geocode(city, recursion=0):
 
 
 def distance_between_coordinates(location1_coord, location2_coord):
+	"""
+	Calculates the distance between two geo cordinates in Kilometres using Vincenty's formulae
+
+	"""
 	return vincenty(location1_coord, location2_coord).km
 
 
 def difference_in_pickup_distance(order1, order2):
+	"""
+	Calculates the distance between two pickup points
+
+	"""
 	location1 = geocode(order1['pickupAdd'],)
 	location2 = geocode(order2['pickupAdd'],)
 	location1_coord = (location1.latitude, location1.longitude)
@@ -115,6 +146,10 @@ def difference_in_pickup_distance(order1, order2):
 
 
 def difference_in_dropoff_distance(order1, order2):
+	"""
+	Calculates the distance between two drop off points
+
+	"""
 	location1 = geocode(order1['dropoffAdd'])
 	location2 = geocode(order2['dropoffAdd'])
 	location1_coord = (location1.latitude, location1.longitude)
@@ -125,4 +160,4 @@ def difference_in_dropoff_distance(order1, order2):
 
 
 if __name__ == '__main__':
-	orders_place_recently(orders)
+	check_for_combination_opportunities(orders)
